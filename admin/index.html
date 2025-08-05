@@ -3,66 +3,310 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>内容管理</title>
+  <title>内容管理 - 我的博客</title>
   <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.css" />
   <style>
-    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background-color: #f8fafc;
+    }
+    
+    [data-slate-editor] {
+      min-height: 100px;
+    }
+    
+    .css-1l2bo3v-EditorToolbar {
+      border: 1px solid #e1e4e8;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+    
+    .css-1d0t2x5-EditorContent {
+      border: 1px solid #e1e4e8;
+      border-radius: 6px;
+      padding: 10px;
+      min-height: 200px;
+    }
+    
+    .cms-container {
+      min-height: 100vh;
+      background: #f8fafc;
+    }
   </style>
 </head>
 <body>
+  <div id="cms-root" class="cms-container"></div>
   <script>
-    console.log('Starting CMS initialization...');
+    console.log('CMS script loaded');
     
-    CMS.init({
-      config: {
-        backend: {
-          name: 'github',
-          repo: 'sqdft/my',
-          branch: 'main',
-          auth_type: 'implicit',
-          app_id: 'Ov23li5G3LpaQYbpAWwb',
-          auth_endpoint: 'https://xiaoblog.netlify.app/.netlify/functions/github-auth',
-          token_endpoint: 'https://xiaoblog.netlify.app/.netlify/functions/github-token'
+    // Auth0 配置
+    const auth0Config = {
+      domain: process.env.AUTH0_DOMAIN || 'your-auth0-domain.auth0.com',
+      client_id: process.env.AUTH0_CLIENT_ID || 'your-auth0-client-id',
+      redirect_uri: window.location.origin + '/admin/',
+    };
+    
+    // Auth0 认证函数
+    async function loginWithAuth0() {
+      const auth0Client = await createAuth0Client({
+        domain: auth0Config.domain,
+        client_id: auth0Config.client_id,
+        redirect_uri: auth0Config.redirect_uri,
+      });
+      
+      try {
+        await auth0Client.loginWithRedirect({
+          authorizationParams: {
+            redirect_uri: auth0Config.redirect_uri,
+          },
+        });
+      } catch (error) {
+        console.error('Auth0 login error:', error);
+      }
+    }
+    
+    // 创建 Auth0 客户端
+    async function createAuth0Client(options) {
+      // 这里使用简化的 Auth0 集成
+      return {
+        loginWithRedirect: async (params) => {
+          const authUrl = `https://${options.domain}/authorize?` +
+            `response_type=code&` +
+            `client_id=${options.client_id}&` +
+            `redirect_uri=${encodeURIComponent(params.authorizationParams.redirect_uri)}&` +
+            `scope=openid profile email&` +
+            `response_mode=query`;
+          
+          window.location.href = authUrl;
         },
-        media_folder: "public/images",
-        public_folder: "/images",
-        collections: [{
-          name: "blog",
-          label: "博客文章",
-          folder: "src/content/blog",
-          create: true,
-          slug: "{{year}}-{{month}}-{{day}}-{{slug}}",
-          fields: [
-            { 
-              label: "标题", 
-              name: "title", 
-              widget: "string", 
-              required: true 
+        
+        handleRedirectCallback: async () => {
+          // 处理回调
+          const query = window.location.search;
+          const params = new URLSearchParams(query);
+          const code = params.get('code');
+          
+          if (code) {
+            // 交换 token
+            const tokenResponse = await fetch('/.netlify/functions/auth0-token', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ code }),
+            });
+            
+            const tokenData = await tokenResponse.json();
+            return tokenData;
+          }
+          
+          throw new Error('No authorization code found');
+        }
+      };
+    }
+    
+    // 初始化 CMS
+    document.addEventListener('DOMContentLoaded', async function() {
+      console.log('DOM loaded, initializing CMS with Auth0...');
+      
+      try {
+        // 检查是否有回调代码
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const state = urlParams.get('state');
+        
+        let accessToken = null;
+        
+        if (code && state) {
+          // 处理 Auth0 回调
+          try {
+            const response = await fetch('/.netlify/functions/auth0-token', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ code, state }),
+            });
+            
+            const tokenData = await response.json();
+            accessToken = tokenData.access_token;
+            
+            // 清理 URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+          } catch (error) {
+            console.error('Token exchange error:', error);
+          }
+        }
+        
+        // CMS 配置
+        const cmsConfig = {
+          config: {
+            backend: {
+              name: 'github',
+              repo: 'sqdft/my',
+              branch: 'main',
+              api_root: 'https://api.github.com',
+              base_url: 'https://github.com',
+              auth_type: 'implicit',
+              app_id: 'Ov23li5G3LpaQYbpAWwb',
+              auth_endpoint: accessToken ? null : 'https://xiaoblog.netlify.app/.netlify/functions/auth0-auth',
+              token_endpoint: 'https://xiaoblog.netlify.app/.netlify/functions/auth0-token'
             },
-            { 
-              label: "发布日期", 
-              name: "date", 
-              widget: "datetime", 
-              required: true 
-            },
-            { 
-              label: "摘要", 
-              name: "summary", 
-              widget: "text", 
-              required: true 
-            },
-            { 
-              label: "内容", 
-              name: "body", 
-              widget: "markdown", 
-              required: true 
-            }
-          ]
-        }]
+            media_folder: "public/images",
+            public_folder: "/images",
+            site_url: "https://xiaoblog.netlify.app",
+            display_url: "https://xiaoblog.netlify.app",
+            locale: 'zh',
+            collections: [
+              {
+                name: "blog",
+                label: "博客文章",
+                label_singular: "文章",
+                description: "管理和编辑博客文章",
+                folder: "src/content/blog",
+                create: true,
+                slug: "{{year}}-{{month}}-{{day}}-{{slug}}",
+                preview_path: "blog/{{year}}-{{month}}-{{day}}-{{slug}}",
+                fields: [
+                  {
+                    label: "标题",
+                    name: "title",
+                    widget: "string",
+                    required: true,
+                    hint: "文章标题，将显示在页面顶部和搜索结果中"
+                  },
+                  {
+                    label: "发布日期",
+                    name: "date",
+                    widget: "datetime",
+                    required: true,
+                    date_format: "YYYY-MM-DD",
+                    time_format: "HH:mm",
+                    hint: "文章发布时间"
+                  },
+                  {
+                    label: "更新日期",
+                    name: "updated",
+                    widget: "datetime",
+                    required: false,
+                    date_format: "YYYY-MM-DD",
+                    time_format: "HH:mm",
+                    hint: "最后更新时间（可选）"
+                  },
+                  {
+                    label: "摘要",
+                    name: "summary",
+                    widget: "text",
+                    required: true,
+                    hint: "文章简介，将显示在文章列表中",
+                    min: 10,
+                    max: 200
+                  },
+                  {
+                    label: "标签",
+                    name: "keywords",
+                    widget: "list",
+                    required: false,
+                    hint: "文章标签，用于分类和搜索",
+                    default: []
+                  },
+                  {
+                    label: "是否精选",
+                    name: "featured",
+                    widget: "boolean",
+                    required: false,
+                    default: false,
+                    hint: "是否在首页精选区域显示"
+                  },
+                  {
+                    label: "内容",
+                    name: "body",
+                    widget: "markdown",
+                    required: true,
+                    hint: "文章正文内容，支持Markdown格式"
+                  }
+                ],
+                view_groups: [
+                  {
+                    label: "内容",
+                    fields: ["title", "summary", "body"]
+                  },
+                  {
+                    label: "设置",
+                    fields: ["date", "updated", "keywords", "featured"]
+                  }
+                ]
+              }
+            ]
+          }
+        };
+        
+        // 如果有 access token，添加到配置中
+        if (accessToken) {
+          cmsConfig.config.backend.backend = {
+            ...cmsConfig.config.backend,
+            access_token: accessToken
+          };
+        }
+        
+        // 初始化 CMS
+        CMS.init(cmsConfig);
+        
+        console.log('CMS initialized successfully with Auth0');
+        
+        // 注册自定义组件
+        CMS.registerPreviewTemplate('blog', ({ entry, widgetFor }) => {
+          const title = entry.getIn(['data', 'title']);
+          const date = entry.getIn(['data', 'date']);
+          const summary = entry.getIn(['data', 'summary']);
+          const featured = entry.getIn(['data', 'featured']);
+          const keywords = entry.getIn(['data', 'keywords']) || [];
+          
+          return h('div', { className: 'preview-container' }, 
+            h('div', { className: 'preview-header' },
+              h('h1', {}, title),
+              h('div', { className: 'preview-meta' },
+                h('time', {}, new Date(date).toLocaleDateString('zh-CN')),
+                featured && h('span', { className: 'featured-badge' }, '精选')
+              )
+            ),
+            summary && h('div', { className: 'preview-summary' }, summary),
+            keywords.size > 0 && h('div', { className: 'preview-keywords' },
+              keywords.map(keyword => h('span', { className: 'keyword-tag' }, `#${keyword}`))
+            ),
+            h('div', { className: 'preview-content' }, widgetFor('body'))
+          );
+        });
+        
+      } catch (error) {
+        console.error('CMS initialization failed:', error);
+        document.getElementById('cms-root').innerHTML = `
+          <div style="padding: 20px; background: #fee; color: #c33; border-radius: 8px; margin: 20px;">
+            <h3>CMS加载失败</h3>
+            <p>错误信息: ${error.message}</p>
+            <p>请检查控制台获取详细信息</p>
+            <button onclick="loginWithAuth0()" style="
+              background: #007cba; 
+              color: white; 
+              border: none; 
+              padding: 10px 20px; 
+              border-radius: 5px; 
+              cursor: pointer; 
+              margin-top: 10px;
+            ">
+              使用 Auth0 重新登录
+            </button>
+          </div>
+        `;
       }
     });
-    
-    console.log('CMS initialization completed');
   </script>
 </body>
 </html>
