@@ -6,7 +6,7 @@ interface BlogCardProps {
   post: BlogPost
 }
 
-export function BlogCard({ post }: BlogCardProps) {
+export function BlogCard({ post }: BlogCardProps) {  // ✅ 确保使用 export function
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
       {post.featured && (

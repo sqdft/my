@@ -1,10 +1,10 @@
- 'use client'
+'use client'
 
 import Link from 'next/link'
 import { useState } from 'react'
 import { navigationConfig, socialConfig } from '@/lib/config'
 
-export function Header() {
+export function Header() {  // ✅ 确保使用 export function
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (

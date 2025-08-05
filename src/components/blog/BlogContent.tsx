@@ -4,7 +4,7 @@ interface BlogContentProps {
   post: BlogPost
 }
 
-export function BlogContent({ post }: BlogContentProps) {
+export function BlogContent({ post }: BlogContentProps) {  // ✅ 确保使用 export function
   return (
     <article className="prose prose-lg max-w-none">
       <header className="mb-8">
