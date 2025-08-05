@@ -1,12 +1,15 @@
- [build]
+[build]
   publish = "out"
   command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[functions]
+  directory = "netlify/functions"
 
 [[plugins]]
   package = "@netlify/plugin-sitemap"
 
 [[plugins]]
   package = "netlify-plugin-submit-sitemap"
-
-[build.environment]
-  NODE_VERSION = "18"

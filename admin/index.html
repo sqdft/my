@@ -16,54 +16,10 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
-    
-    [data-slate-editor] {
-      min-height: 100px;
-    }
-    
-    .css-1l2bo3v-EditorToolbar {
-      border: 1px solid #e1e4e8;
-      border-radius: 6px;
-      margin-bottom: 10px;
-    }
-    
-    .css-1d0t2x5-EditorContent {
-      border: 1px solid #e1e4e8;
-      border-radius: 6px;
-      padding: 10px;
-      min-height: 200px;
-    }
   </style>
 </head>
 <body>
   <script>
-    // 自定义预览组件
-    const BlogPreview = ({ entry, widgetFor }) => {
-      const title = entry.getIn(['data', 'title']);
-      const date = entry.getIn(['data', 'date']);
-      const summary = entry.getIn(['data', 'summary']);
-      const featured = entry.getIn(['data', 'featured']);
-      const keywords = entry.getIn(['data', 'keywords']) || [];
-      
-      return h('div', { className: 'preview-container' }, 
-        h('div', { className: 'preview-header' },
-          h('h1', {}, title),
-          h('div', { className: 'preview-meta' },
-            h('time', {}, new Date(date).toLocaleDateString('zh-CN')),
-            featured && h('span', { className: 'featured-badge' }, '精选')
-          )
-        ),
-        summary && h('div', { className: 'preview-summary' }, summary),
-        keywords.size > 0 && h('div', { className: 'preview-keywords' },
-          keywords.map(keyword => h('span', { className: 'keyword-tag' }, `#${keyword}`))
-        ),
-        h('div', { className: 'preview-content' }, widgetFor('body'))
-      );
-    };
-
-    // 注册自定义预览组件
-    CMS.registerPreviewTemplate('blog', BlogPreview);
-
     // 初始化Decap CMS
     CMS.init({
       config: {
@@ -71,84 +27,55 @@
           name: 'github',
           repo: 'sqdft/my',
           branch: 'main',
-          api_root: 'https://api.github.com',
-          base_url: 'https://github.com',
-          auth_endpoint: 'https://xiaoblog.netlify.app/.netlify/functions/github-auth',
           auth_type: 'implicit',
-          token_endpoint: 'https://xiaoblog.netlify.app/.netlify/functions/github-token'
+          app_id: 'Ov23li5G3LpaQYbpAWwb'
         },
         media_folder: "public/images",
         public_folder: "/images",
         site_url: "https://xiaoblog.netlify.app",
         display_url: "https://xiaoblog.netlify.app",
-        locale: 'zh',
         collections: [
           {
             name: "blog",
             label: "博客文章",
-            label_singular: "文章",
-            description: "管理和编辑博客文章",
             folder: "src/content/blog",
             create: true,
             slug: "{{year}}-{{month}}-{{day}}-{{slug}}",
-            preview_path: "blog/{{year}}-{{month}}-{{day}}-{{slug}}",
             fields: [
               {
                 label: "标题",
                 name: "title",
                 widget: "string",
-                required: true,
-                hint: "文章标题，将显示在页面顶部和搜索结果中"
+                required: true
               },
               {
                 label: "发布日期",
                 name: "date",
                 widget: "datetime",
-                required: true,
-                date_format: "YYYY-MM-DD",
-                time_format: "HH:mm",
-                hint: "文章发布时间"
-              },
-              {
-                label: "更新日期",
-                name: "updated",
-                widget: "datetime",
-                required: false,
-                date_format: "YYYY-MM-DD",
-                time_format: "HH:mm",
-                hint: "最后更新时间（可选）"
+                required: true
               },
               {
                 label: "摘要",
                 name: "summary",
                 widget: "text",
-                required: true,
-                hint: "文章简介，将显示在文章列表中",
-                min: 10,
-                max: 200
+                required: true
               },
               {
                 label: "标签",
                 name: "keywords",
-                widget: "list",
-                required: false,
-                hint: "文章标签，用于分类和搜索",
-                default: []
+                widget: "list"
               },
               {
                 label: "是否精选",
                 name: "featured",
                 widget: "boolean",
-                required: false,
-                default: false,
-                hint: "是否在首页精选区域显示"
+                default: false
               },
               {
                 label: "内容",
                 name: "body",
                 widget: "markdown",
-                required: true,
-                hint: "文章正文内容，支持Markdown格式"
+                required: true
               }
             ]
           }
