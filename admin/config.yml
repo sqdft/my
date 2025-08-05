@@ -1,0 +1,33 @@
+backend:
+  name: git-gateway
+  branch: main
+
+media_folder: "public/images"
+public_folder: "/images"
+
+site_url: https://sqdft.github.io/homepage
+display_url: https://sqdft.github.io/homepage
+
+logo_url: https://sqdft.github.io/homepage/favicon.ico
+
+collections:
+  - name: "blog"
+    label: "博客文章"
+    label_singular: "文章"
+    description: "博客文章内容管理"
+    folder: "src/content/blog"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    path: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    media_folder: ""
+    public_folder: ""
+    editor:
+      preview: true
+    fields:
+      - { label: "标题", name: "title", widget: "string", required: true }
+      - { label: "发布日期", name: "date", widget: "datetime", required: true, date_format: "YYYY-MM-DD", time_format: "HH:mm" }
+      - { label: "更新日期", name: "updated", widget: "datetime", date_format: "YYYY-MM-DD", time_format: "HH:mm", required: false }
+      - { label: "摘要", name: "summary", widget: "text", required: true, hint: "文章的简短描述，用于列表展示" }
+      - { label: "标签", name: "keywords", widget: "list", required: false, hint: "文章标签，用逗号分隔" }
+      - { label: "是否精选", name: "featured", widget: "boolean", required: false, default: false, hint: "是否在首页精选区域显示" }
+      - { label: "内容", name: "body", widget: "markdown", required: true, hint: "文章正文内容，支持Markdown格式" }

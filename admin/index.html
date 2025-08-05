@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>内容管理 - 我的博客</title>
+  <script src="https://unpkg.com/netlify-cms@^2.0.0/dist/netlify-cms.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    // 自定义预览模板
+    CMS.registerPreviewTemplate('blog', ({ entry, widgetFor }) => {
+      const title = entry.getIn(['data', 'title']);
+      const date = entry.getIn(['data', 'date']);
+      const summary = entry.getIn(['data', 'summary']);
+      const featured = entry.getIn(['data', 'featured']);
+      const keywords = entry.getIn(['data', 'keywords']) || [];
+      
+      return h('div', { style: { maxWidth: '800px', margin: '0 auto', padding: '20px', fontFamily: 'system-ui' } },
+        h('header', {},
+          h('h1', { style: { fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '1rem' } }, title),
+          h('div', { style: { color: '#666', marginBottom: '1rem' } }, 
+            new Date(date).toLocaleDateString('zh-CN')
+          ),
+          featured && h('span', { 
+            style: { 
+              backgroundColor: '#3b82f6', 
+              color: 'white', 
+              padding: '0.25rem 0.5rem', 
+              borderRadius: '0.25rem', 
+              fontSize: '0.875rem',
+              marginRight: '0.5rem'
+            } 
+          }, '精选'),
+          keywords.size > 0 && h('div', {},
+            keywords.map(keyword => 
+              h('span', { 
+                style: { 
+                  backgroundColor: '#f3f4f6', 
+                  color: '#374151', 
+                  padding: '0.25rem 0.5rem', 
+                  borderRadius: '0.25rem', 
+                  fontSize: '0.875rem',
+                  marginRight: '0.5rem',
+                  marginBottom: '0.5rem'
+                } 
+              }, `#${keyword}`)
+            )
+          )
+        ),
+        summary && h('div', { 
+          style: { 
+            fontSize: '1.25rem', 
+            color: '#4b5563', 
+            fontStyle: 'italic',
+            marginBottom: '2rem',
+            padding: '1rem',
+            backgroundColor: '#f9fafb',
+            borderRadius: '0.5rem'
+          } 
+        }, summary),
+        h('div', { style: { lineHeight: '1.75' } }, widgetFor('body'))
+      );
+    });
+
+    // 自定义编辑器组件
+    CMS.registerEditorComponent({
+      id: 'youtube',
+      label: 'YouTube',
+      fields: [
+        { name: 'id', label: 'YouTube Video ID', widget: 'string' },
+        { name: 'autoplay', label: 'Autoplay', widget: 'boolean' }
+      ],
+      pattern: /^{{< youtube ([^"]+) ?([a-z]+) >}}/,
+      fromBlock: function(match) {
+        return {
+          id: match[1],
+          autoplay: match[2] === 'autoplay'
+        };
+      },
+      toBlock: function(obj) {
+        return `{{< youtube ${obj.id} ${obj.autoplay ? 'autoplay' : ''} >}}`;
+      },
+      toPreview: function(obj) {
+        return (
+          `<img src="http://img.youtube.com/vi/${obj.id}/maxresdefault.jpg" alt="YouTube Video" />`
+        );
+      }
+    });
+  </script>
+</body>
+</html>
