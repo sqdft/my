@@ -1,14 +1,15 @@
 backend:
   name: git-gateway
   branch: main
+  repo: sqdft/my  # ✅ 修正为您的实际仓库名
 
 media_folder: "public/images"
 public_folder: "/images"
 
-site_url: https://sqdft.github.io/homepage
-display_url: https://sqdft.github.io/homepage
+site_url: https://sqdft.github.io/my
+display_url: https://sqdft.github.io/my
 
-logo_url: https://sqdft.github.io/homepage/favicon.ico
+logo_url: https://sqdft.github.io/my/favicon.ico
 
 collections:
   - name: "blog"
