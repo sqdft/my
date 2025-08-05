@@ -16,7 +16,28 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { code } = JSON.parse(event.body);
+    // 检查请求体
+    if (!event.body) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Missing request body' })
+      };
+    }
+
+    let parsedBody;
+    try {
+      parsedBody = JSON.parse(event.body);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Invalid JSON in request body' })
+      };
+    }
+
+    const { code } = parsedBody;
     
     if (!code) {
       return {
@@ -26,6 +47,9 @@ exports.handler = async (event, context) => {
       };
     }
 
+    console.log('Processing GitHub token exchange...');
+    console.log('Code received:', code);
+    
     const response = await fetch('https://github.com/login/oauth/access_token', {
       method: 'POST',
       headers: {
@@ -41,12 +65,14 @@ exports.handler = async (event, context) => {
     });
 
     const data = await response.json();
+    console.log('Token exchange response:', data);
     
     if (data.error) {
+      console.error('Token exchange error:', data.error);
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: data.error_description || 'GitHub OAuth failed' })
+        body: JSON.stringify({ error: data.error_description || 'Token exchange failed' })
       };
     }
 
@@ -60,6 +86,7 @@ exports.handler = async (event, context) => {
       })
     };
   } catch (error) {
+    console.error('Token function error:', error);
     return {
       statusCode: 400,
       headers,
