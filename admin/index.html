@@ -64,34 +64,6 @@
     // 注册自定义预览组件
     CMS.registerPreviewTemplate('blog', BlogPreview);
 
-    // 自定义编辑器组件
-    CMS.registerEditorComponent({
-      id: 'youtube',
-      label: 'YouTube视频',
-      fields: [
-        { name: 'id', label: '视频ID', widget: 'string' },
-        { name: 'title', label: '视频标题', widget: 'string' }
-      ],
-      pattern: /^{{< youtube (.+) >}}/,
-      fromBlock: function(match) {
-        return {
-          id: match[1]
-        };
-      },
-      toBlock: function(obj) {
-        return `{{< youtube ${obj.id} >}}`;
-      },
-      toPreview: function(obj) {
-        return h('div', {},
-          h('img', { 
-            src: `https://img.youtube.com/vi/${obj.id}/maxresdefault.jpg`,
-            alt: obj.title || 'YouTube视频',
-            style: { maxWidth: '100%', borderRadius: '8px' }
-          })
-        );
-      }
-    });
-
     // 初始化Decap CMS
     CMS.init({
       config: {
@@ -101,7 +73,9 @@
           branch: 'main',
           api_root: 'https://api.github.com',
           base_url: 'https://github.com',
-          auth_endpoint: 'https://xiaoblog.netlify.app/.netlify/functions/github-auth'
+          auth_endpoint: 'https://xiaoblog.netlify.app/.netlify/functions/github-auth',
+          auth_type: 'implicit',
+          token_endpoint: 'https://xiaoblog.netlify.app/.netlify/functions/github-token'
         },
         media_folder: "public/images",
         public_folder: "/images",
@@ -170,28 +144,11 @@
                 hint: "是否在首页精选区域显示"
               },
               {
-                label: "封面图片",
-                name: "image",
-                widget: "image",
-                required: false,
-                hint: "文章封面图片（可选）"
-              },
-              {
                 label: "内容",
                 name: "body",
                 widget: "markdown",
                 required: true,
                 hint: "文章正文内容，支持Markdown格式"
-              }
-            ],
-            view_groups: [
-              {
-                label: "内容",
-                fields: ["title", "summary", "body"]
-              },
-              {
-                label: "设置",
-                fields: ["date", "updated", "keywords", "featured", "image"]
               }
             ]
           }

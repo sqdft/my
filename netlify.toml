@@ -1,17 +1,12 @@
-[build]
+ [build]
   publish = "out"
   command = "npm run build"
-
-[build.environment]
-  NODE_VERSION = "18"
-  GITHUB_CLIENT_ID = "Ov23li5G3LpaQYbpAWwb"
-  GITHUB_CLIENT_SECRET = "3aae2effa629511e936106818788809c15c72c7c"
-
-[functions]
-  directory = "netlify/functions"
 
 [[plugins]]
   package = "@netlify/plugin-sitemap"
 
 [[plugins]]
   package = "netlify-plugin-submit-sitemap"
+
+[build.environment]
+  NODE_VERSION = "18"

@@ -1,9 +1,31 @@
 const fetch = require('node-fetch');
 
 exports.handler = async (event, context) => {
-  const { code } = JSON.parse(event.body);
-  
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers,
+      body: ''
+    };
+  }
+
   try {
+    const { code } = JSON.parse(event.body);
+    
+    if (!code) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Missing authorization code' })
+      };
+    }
+
     const response = await fetch('https://github.com/login/oauth/access_token', {
       method: 'POST',
       headers: {
@@ -21,11 +43,16 @@ exports.handler = async (event, context) => {
     const data = await response.json();
     
     if (data.error) {
-      throw new Error(data.error_description || 'GitHub OAuth failed');
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: data.error_description || 'GitHub OAuth failed' })
+      };
     }
 
     return {
       statusCode: 200,
+      headers,
       body: JSON.stringify({
         access_token: data.access_token,
         token_type: data.token_type,
@@ -35,6 +62,7 @@ exports.handler = async (event, context) => {
   } catch (error) {
     return {
       statusCode: 400,
+      headers,
       body: JSON.stringify({ error: error.message })
     };
   }
