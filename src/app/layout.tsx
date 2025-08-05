@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import './globals.css'
+import '@/styles/globals.css'  // ✅ 修改这里
 import { siteConfig, seoConfig } from '@/lib/config'
 
 const inter = Inter({ subsets: ['latin'] })
